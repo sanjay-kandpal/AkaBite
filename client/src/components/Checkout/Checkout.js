@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from './api';
-import { useAuth } from './AuthContext';
+import api from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 function Checkout() {
   const [cart, setCart] = useState(null);

@@ -1,12 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
-import { AuthProvider,useAuth  } from './AuthContext';
-import Login from './Login';
-import Register from './Register';
-import Home from './Home';
-import Cart from './Cart';
-import Checkout from './Checkout';
-import OrderHistory from './OrderHistory';
+import { AuthProvider,useAuth  } from './contexts/AuthContext';
+import Login from './components/Login/Login';
+import Register from './components/Register/Register';
+import Home from './components/Home/Home';
+import Cart from './components/Cart/Cart';
+import Checkout from './components/Checkout/Checkout';
+import OrderHistory from './components/OrderHistory/OrderHistory';
 
 function AppContent() {
   const { isAuthenticated, isLoading,logout } = useAuth();

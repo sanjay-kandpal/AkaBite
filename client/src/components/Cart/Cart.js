@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import api from './api';
+import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 function Cart() {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);

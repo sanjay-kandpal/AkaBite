@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import api from './api';
+import api from '../../services/api';
 function Home() {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
