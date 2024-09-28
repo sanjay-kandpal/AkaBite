@@ -25,10 +25,10 @@ function Checkout() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      console.log('Token before cart request in Checkout:', token); // Add this line for debugging
+      console.log('Token before cart request in Checkout:', token);
       const response = await api.get('/cart');
-      console.log('Cart response in Checkout:', response.data); // Add this line for debugging
-      setCart(response.data);
+      console.log('Cart response in Checkout:', response.data);
+      setCart(response.data.cart); // Assuming the API returns { cart: { items: [...] } }
     } catch (error) {
       console.error('Error fetching cart:', error);
       setError('Failed to load cart. Please try again later.');
@@ -43,11 +43,11 @@ function Checkout() {
   const handlePlaceOrder = async () => {
     try {
       const response = await api.post('/orders/create');
-      if(response.data.stockError){
+      if (response.data.stockError) {
         setStockError(response.data.stockError);
-      }else{
+      } else {
         alert('Order placed successfully! Your order is: ' + response.data._id);
-        navigate('/order-history')
+        navigate('/order-history');
       }
     } catch (error) {
       console.error('Error placing order:', error);
@@ -61,7 +61,7 @@ function Checkout() {
       }
     }
   };
-
+  
   if (loading) {
     return <div className="text-center">Loading...</div>;
   }
@@ -75,12 +75,12 @@ function Checkout() {
     );
   }
 
-  const totalAmount = cart ? cart.items.reduce((total, item) => total + (item.item.price * item.quantity), 0) : 0;
+  const totalAmount = cart && cart.items ? cart.items.reduce((total, item) => total + (item.item.price * item.quantity), 0) : 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-8 text-center">Checkout</h1>
-      {cart && cart.items.length > 0 ? (
+      {cart && cart.items && cart.items.length > 0 ? (
         <>
           <div className="bg-white shadow-md rounded my-6 p-6">
             <h2 className="text-2xl font-semibold mb-4">Order Summary</h2>
@@ -108,6 +108,12 @@ function Checkout() {
         </>
       ) : (
         <p className="text-center text-gray-600">Your cart is empty. Cannot proceed to checkout.</p>
+      )}
+      {stockError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4" role="alert">
+          <strong className="font-bold">Stock Error:</strong>
+          <span className="block sm:inline"> {stockError}</span>
+        </div>
       )}
     </div>
   );

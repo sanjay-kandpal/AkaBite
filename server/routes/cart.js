@@ -16,7 +16,32 @@ router.get('/', auth, async (req, res) => {
       cart = new Cart({ user: req.user, items: [] });
       await cart.save();
     }
-    res.json(cart);
+
+    // check stock availability for each item in the cart
+    const updatedItems = [];
+    const unavailableItems = [];
+
+    for (const cartItem of cart.items) {
+      const item = await Item.findById(cartItem.item._id);
+      if (!item || item.stockQuantity === 0) {
+        unavailableItems.push(cartItem.item.name);
+      } else if (item.stockQuantity < cartItem.quantity) {
+        cartItem.quantity = item.stockQuantity;
+        updatedItems.push(cartItem);
+      } else {
+        updatedItems.push(cartItem);
+      }
+    }
+
+    // Update cart if there were changes
+    if (updatedItems.length !== cart.items.length) {
+      cart.items = updatedItems;
+      await cart.save();
+    }
+
+    res.json({ cart, unavailableItems });
+    
+    
   } catch (error) {
     res.status(500).json({ message: 'Error fetching cart', error: error.message });
   }
@@ -55,48 +80,30 @@ router.post('/add', auth, async (req, res) => {
 router.put('/update/:itemId', auth, async (req, res) => {
   try {
     const { quantity } = req.body;
-    const cartItemId = req.params.itemId;
-
-    console.log('Updating cart item:', cartItemId);
-    console.log('New quantity:', quantity);
-
     const cart = await Cart.findOne({ user: req.user });
     if (!cart) {
       return res.status(404).json({ message: 'Cart not found' });
     }
-
-    const cartItemIndex = cart.items.findIndex(item => item._id.toString() === cartItemId);
+    const cartItemIndex = cart.items.findIndex(item => item.item.toString() === req.params.itemId);
     if (cartItemIndex === -1) {
       return res.status(404).json({ message: 'Item not found in cart' });
     }
-
-    const cartItem = cart.items[cartItemIndex];
-    console.log('Found cart item:', cartItem);
-
-    const item = await Item.findById(cartItem.item);
+    const item = await Item.findById(req.params.itemId);
     if (!item) {
-      return res.status(404).json({ message: 'Item not found in inventory' });
+      return res.status(404).json({ message: 'Item not found' });
     }
-
     if (item.stockQuantity < quantity) {
       return res.status(400).json({ message: 'Not enough stock available', availableStock: item.stockQuantity });
     }
-
     cart.items[cartItemIndex].quantity = quantity;
     await cart.save();
-
-    // Fetch the updated cart with populated item details
-    const updatedCart = await Cart.findOne({ user: req.user }).populate('items.item');
-    
-    console.log('Updated cart:', JSON.stringify(updatedCart, null, 2));
-    res.json(updatedCart);
+    res.json(cart);
   } catch (error) {
-    console.error('Error updating item quantity:', error);
     res.status(500).json({ message: 'Error updating item quantity', error: error.message });
   }
 });
-// Remove item from cart
 
+// Remove item from cart
 router.delete('/remove/:itemId', auth, async (req, res) => {
   try {
     const itemIdToRemove = req.params.itemId;

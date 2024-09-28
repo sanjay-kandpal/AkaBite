@@ -8,6 +8,7 @@ function ItemDetail() {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [addToCartError, setAddToCartError] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -20,6 +21,7 @@ function ItemDetail() {
       setLoading(true);
       const response = await axios.get(`/api/items/${id}`);
       setItem(response.data);
+      setQuantity(response.data.stockQuantity > 0 ? 1 : 0);
     } catch (error) {
       console.error('Error fetching item details:', error);
       setError('Failed to load item details. Please try again later.');
@@ -30,18 +32,19 @@ function ItemDetail() {
 
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value);
-    setQuantity(value > 0 ? value : 1);
+    setQuantity(Math.min(Math.max(1, value), item.stockQuantity));
   };
 
   const handleAddToCart = async () => {
     try {
+      setAddToCartError(null);
       const response = await api.post('/cart/add', { itemId: item._id, quantity });
       console.log('Add to cart response:', response.data);
       alert(`${quantity} ${item.name}(s) added to cart!`);
       navigate('/cart');
     } catch (error) {
       console.error('Error adding item to cart:', error.response?.data || error.message);
-      alert('Failed to add item to cart. Please try again.');
+      setAddToCartError(error.response?.data?.message || 'Failed to add item to cart. Please try again.');
     }
   };
 
@@ -61,6 +64,8 @@ function ItemDetail() {
   if (!item) {
     return <div className="text-center">Item not found</div>;
   }
+
+  const isOutOfStock = item.stockQuantity === 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -86,19 +91,28 @@ function ItemDetail() {
               min="1"
               max={item.stockQuantity}
               className="border rounded px-2 py-1 w-20"
+              disabled={isOutOfStock}
             />
           </div>
           <button 
             onClick={handleAddToCart}
-            className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
-            disabled={item.stockQuantity === 0}
+            className={`py-2 px-4 rounded ${
+              isOutOfStock 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-green-500 hover:bg-green-600 text-white'
+            }`}
+            disabled={isOutOfStock}
           >
-            {item.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+            {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
           </button>
-          {item.stockQuantity > 0 && (
-            <p className="text-sm text-gray-500 mt-2">
-              {item.stockQuantity} left in stock
-            </p>
+          <p className={`text-sm mt-2 ${isOutOfStock ? 'text-red-500' : 'text-gray-500'}`}>
+            {isOutOfStock 
+              ? 'This item is currently out of stock.' 
+              : `${item.stockQuantity} left in stock`
+            }
+          </p>
+          {addToCartError && (
+            <p className="text-red-500 mt-2">{addToCartError}</p>
           )}
         </div>
       </div>

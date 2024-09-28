@@ -36,7 +36,11 @@ router.post('/create', auth, async (req, res) => {
       totalAmount += item.price * cartItem.quantity;
       // Update inventory
       item.stockQuantity -= cartItem.quantity;
+      item.stockQuantity = Math.max(0,item.stockQuantity);
+
       await item.save();
+      // Log the stock update
+      console.log(`Updated stock for ${item.name}: ${item.stockQuantity}`);
     }
 
     // Create order
@@ -69,7 +73,6 @@ router.post('/create', auth, async (req, res) => {
     res.status(500).json({ message: 'Error creating order', error: error.message });
   }
 });
-
 router.get('/history', auth, async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user }).populate('items.item');
