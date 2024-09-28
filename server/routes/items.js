@@ -30,4 +30,19 @@ router.get('/items', async (req, res) => {
   }
 });
 
+// New route for fetching a single item by ID
+router.get('/items/:id', async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    res.json(item);
+  } catch (error) {
+    console.error('Error fetching item:', error);
+    res.status(500).json({ message: 'Error fetching item', error: error.message });
+  }
+});
+
+
 module.exports = router;

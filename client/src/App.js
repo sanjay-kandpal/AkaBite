@@ -1,15 +1,16 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
-import { AuthProvider,useAuth  } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
 import Home from './components/Home/Home';
 import Cart from './components/Cart/Cart';
 import Checkout from './components/Checkout/Checkout';
 import OrderHistory from './components/OrderHistory/OrderHistory';
+import ItemDetail from './components/ItemDetail/ItemDetail'; // Import the new ItemDetail component
 
 function AppContent() {
-  const { isAuthenticated, isLoading,logout } = useAuth();
+  const { isAuthenticated, isLoading, logout } = useAuth();
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -92,11 +93,21 @@ function AppContent() {
               </PrivateRoute>
             }
           />
+          {/* Add the new route for ItemDetail */}
+          <Route
+            path="/item/:id"
+            element={
+              <PrivateRoute>
+                <ItemDetail />
+              </PrivateRoute>
+            }
+          />
         </Routes>
       </div>
     </Router>
   );
 }
+
 function App() {
   return (
     <AuthProvider>
@@ -104,4 +115,5 @@ function App() {
     </AuthProvider>
   );
 }
+
 export default App;

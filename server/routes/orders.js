@@ -13,6 +13,19 @@ router.post('/create', auth, async (req, res) => {
       return res.status(400).json({ message: 'Cart is empty' });
     }
 
+    // check stock levels
+    const stockErrors = [];
+    for (const cartItem of cart.items) {
+      const item = await Item.findById(cartItem.item._id);
+      if (item.stockQuantity < cartItem.quantity) {
+        stockErrors.push(`Not enough stock for ${item.name}. Available: ${item.stockQuantity}, Requested: ${cartItem.quantity}`);
+      }
+    }
+
+    if (stockErrors.length > 0) {
+      return res.status(400).json({ stockError: stockErrors.join('; ') });
+    }
+
     // Check inventory and calculate total
     let totalAmount = 0;
     for (let cartItem of cart.items) {
@@ -38,11 +51,20 @@ router.post('/create', auth, async (req, res) => {
     });
     await order.save();
 
+    // update stock levels and save the order
+    for (const orderItem of order.items) {
+      const item = await Item.findById(orderItem.item);
+      item.stockQuantity -= orderItem.quantity;
+      await item.save();
+    }
+    
+    await order.save()
+
     // Clear cart
     cart.items = [];
     await cart.save();
 
-    res.json(order);
+    res.status(201).json(order);
   } catch (error) {
     res.status(500).json({ message: 'Error creating order', error: error.message });
   }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import { Link } from 'react-router-dom';
+
 function Home() {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -11,7 +11,6 @@ function Home() {
   const [sortBy, setSortBy] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchItems();
@@ -45,17 +44,6 @@ function Home() {
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
-    }
-  };
-
-  const handleAddToCart = async (item) => {
-    try {
-      const response = await api.post('/cart/add', { itemId: item._id, quantity: 1 });
-      console.log('Add to cart response:', response.data);
-      alert('Item added to cart!');
-    } catch (error) {
-      console.error('Error adding item to cart:', error.response?.data || error.message);
-      alert('Failed to add item to cart. Please try again.');
     }
   };
 
@@ -127,16 +115,14 @@ function Home() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {items.map(item => (
           <div key={item._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+            <img src={item.imageUrl} alt={item.name} className="w-full h-48 object-cover" />
             <div className="p-4">
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">{item.name}</h3>
-              <p className="text-gray-600 mb-2">{item.description}</p>
-              <p className="text-green-600 font-bold text-lg mb-2">${item.price.toFixed(2)}</p>
-              <button 
-                onClick={() => handleAddToCart(item)}
-                className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+              <Link 
+                to={`/item/${item._id}`}
+                className="text-xl font-semibold text-blue-600 hover:text-blue-800"
               >
-                Add to Cart
-              </button>
+                {item.name}
+              </Link>
             </div>
           </div>
         ))}

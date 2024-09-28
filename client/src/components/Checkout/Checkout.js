@@ -7,6 +7,7 @@ function Checkout() {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [stockError, setStockError] = useState(null);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
@@ -42,11 +43,19 @@ function Checkout() {
   const handlePlaceOrder = async () => {
     try {
       const response = await api.post('/orders/create');
-      alert(`Order placed successfully! Your order ID is: ${response.data._id}`);
-      navigate('/order-history');
+      if(response.data.stockError){
+        setStockError(response.data.stockError);
+      }else{
+        alert('Order placed successfully! Your order is: ' + response.data._id);
+        navigate('/order-history')
+      }
     } catch (error) {
       console.error('Error placing order:', error);
-      alert('Failed to place order. Please try again.');
+      if (error.response && error.response.data.stockError) {
+        setStockError(error.response.data.stockError);
+      } else {
+        alert('Failed to place order. Please try again.');
+      }
       if (error.response && error.response.status === 401) {
         navigate('/login');
       }
