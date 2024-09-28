@@ -5,8 +5,11 @@ const Cart = require('../models/Cart');
 const Item = require('../models/Item');
 const auth = require('../middleware/auth');
 
+
+router.use(auth);
 // Get user's cart
 router.get('/', auth, async (req, res) => {
+  console.log('Get cart route hit');
   try {
     let cart = await Cart.findOne({ user: req.user }).populate('items.item');
     if (!cart) {

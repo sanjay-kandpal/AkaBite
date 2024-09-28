@@ -10,7 +10,7 @@ function Register() {
     e.preventDefault();
     setMessage('');
     try {
-      const response = await axios.post('/api/register', { email, password });
+      const response = await axios.post('/api/auth/register', { email, password });
       setMessage('Registered successfully');
       setEmail('');
       setPassword('');

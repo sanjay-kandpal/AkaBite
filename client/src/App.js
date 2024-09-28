@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
+import { useAuthApi } from './useAuthApi';
 import Login from './Login';
 import Register from './Register';
 import Home from './Home';
@@ -8,8 +9,9 @@ import Checkout from './Checkout';
 import OrderHistory from './OrderHistory';
 
 function App() {
+  const { token, logout } = useAuthApi();
+
   const isAuthenticated = () => {
-    const token = localStorage.getItem('token');
     return token !== null && token !== undefined;
   };
 
@@ -45,7 +47,7 @@ function App() {
               <li>
                 <button
                   onClick={() => {
-                    localStorage.removeItem('token');
+                    logout();
                     window.location.href = '/login';
                   }}
                   className="text-white hover:text-gray-300"

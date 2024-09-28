@@ -16,10 +16,13 @@ function Cart() {
     try {
       setLoading(true);
       const response = await axios.get('/api/cart');
+      console.log('Cart response:', response.data);
       setCart(response.data);
+      setLoading(false)
     } catch (error) {
       console.error('Error fetching cart:', error);
       setError('Failed to load cart. Please try again later.');
+      setLoading(false);
     } finally {
       setLoading(false);
     }

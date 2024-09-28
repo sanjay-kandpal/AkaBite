@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import api from './api';
 function Home() {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -50,10 +50,11 @@ function Home() {
 
   const handleAddToCart = async (item) => {
     try {
-      await axios.post('/api/cart/add', { itemId: item._id, quantity: 1 });
+      const response = await api.post('/cart/add', { itemId: item._id, quantity: 1 });
+      console.log('Add to cart response:', response.data);
       alert('Item added to cart!');
     } catch (error) {
-      console.error('Error adding item to cart:', error);
+      console.error('Error adding item to cart:', error.response?.data || error.message);
       alert('Failed to add item to cart. Please try again.');
     }
   };
