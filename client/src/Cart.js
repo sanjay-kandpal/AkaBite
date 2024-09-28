@@ -1,28 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import api from './api';
 import { useNavigate } from 'react-router-dom';
-
+import { useAuth } from './AuthContext';
 function Cart() {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-
+  const { isAuthenticated } = useAuth();
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if (isAuthenticated) {
+      fetchCart();
+    } else {
+      setLoading(false);
+      setError('Please log in to view your cart.');
+    }
+  }, [isAuthenticated]);
 
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/cart');
+      const token = localStorage.getItem('token');
+      console.log('Token before cart request:', token); // Add this line
+      const response = await api.get('/cart');
       console.log('Cart response:', response.data);
       setCart(response.data);
-      setLoading(false)
     } catch (error) {
       console.error('Error fetching cart:', error);
       setError('Failed to load cart. Please try again later.');
-      setLoading(false);
     } finally {
       setLoading(false);
     }

@@ -1,25 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from './api';
+import { useAuth } from './AuthContext';
 
 function Checkout() {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if (isAuthenticated) {
+      fetchCart();
+    } else {
+      setLoading(false);
+      setError('Please log in to proceed to checkout.');
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
 
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/cart');
+      const token = localStorage.getItem('token');
+      console.log('Token before cart request in Checkout:', token); // Add this line for debugging
+      const response = await api.get('/cart');
+      console.log('Cart response in Checkout:', response.data); // Add this line for debugging
       setCart(response.data);
     } catch (error) {
       console.error('Error fetching cart:', error);
       setError('Failed to load cart. Please try again later.');
+      if (error.response && error.response.status === 401) {
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -27,12 +41,15 @@ function Checkout() {
 
   const handlePlaceOrder = async () => {
     try {
-      const response = await axios.post('/api/orders/create');
+      const response = await api.post('/orders/create');
       alert(`Order placed successfully! Your order ID is: ${response.data._id}`);
       navigate('/order-history');
     } catch (error) {
       console.error('Error placing order:', error);
       alert('Failed to place order. Please try again.');
+      if (error.response && error.response.status === 401) {
+        navigate('/login');
+      }
     }
   };
 

@@ -1,23 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import api from './api';
+import { useAuth } from './AuthContext';
 
 function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (isAuthenticated) {
+      fetchOrders();
+    } else {
+      setLoading(false);
+      setError('Please log in to view your order history.');
+    }
+  }, [isAuthenticated]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/orders/history');
+      const token = localStorage.getItem('token');
+      console.log('Token before order history request:', token); // Add this line for debugging
+      const response = await api.get('/orders/history');
+      console.log('Order history response:', response.data); // Add this line for debugging
       setOrders(response.data);
     } catch (error) {
       console.error('Error fetching order history:', error);
       setError('Failed to load order history. Please try again later.');
+      if (error.response && error.response.status === 401) {
+        // Redirect to login if unauthorized
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }

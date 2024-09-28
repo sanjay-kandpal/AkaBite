@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
-import { useAuthApi } from './useAuthApi';
+import { AuthProvider,useAuth  } from './AuthContext';
 import Login from './Login';
 import Register from './Register';
 import Home from './Home';
@@ -8,15 +8,13 @@ import Cart from './Cart';
 import Checkout from './Checkout';
 import OrderHistory from './OrderHistory';
 
-function App() {
-  const { token, logout } = useAuthApi();
-
-  const isAuthenticated = () => {
-    return token !== null && token !== undefined;
-  };
-
+function AppContent() {
+  const { isAuthenticated, isLoading,logout } = useAuth();
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
   const PrivateRoute = ({ children }) => {
-    return isAuthenticated() ? children : <Navigate to="/login" />;
+    return isAuthenticated ? children : <Navigate to="/login" />;
   };
 
   return (
@@ -33,7 +31,7 @@ function App() {
             <li>
               <Link to="/order-history" className="text-white hover:text-gray-300">Order History</Link>
             </li>
-            {!isAuthenticated() && (
+            {!isAuthenticated && (
               <>
                 <li>
                   <Link to="/login" className="text-white hover:text-gray-300">Login</Link>
@@ -43,7 +41,7 @@ function App() {
                 </li>
               </>
             )}
-            {isAuthenticated() && (
+            {isAuthenticated && (
               <li>
                 <button
                   onClick={() => {
@@ -60,8 +58,8 @@ function App() {
         </nav>
 
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
+          <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <Register />} />
           <Route
             path="/"
             element={
@@ -99,5 +97,11 @@ function App() {
     </Router>
   );
 }
-
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
 export default App;
