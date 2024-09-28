@@ -8,14 +8,13 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
-
-// MongoDB Atlas connection string
-const DB_USERNAME = process.env.DB_USERNAME;
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const MONGODB_URI = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@cluster01.q8p8u.mongodb.net/?retryWrites=true&w=majority&appName=Cluster01`;
-
-// Connect to MongoDB Atlas
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3001'
+}));
+ 
+// MongoDB Atlas connection
+const MONGODB_URI = process.env.MONGODB_URI;
+console.log(MONGODB_URI);
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('Connected to MongoDB Atlas'))
   .catch(err => console.error('Error connecting to MongoDB Atlas:', err));
@@ -24,15 +23,22 @@ mongoose.connect(MONGODB_URI)
 const categoryRoutes = require('./routes/categories');
 const itemRoutes = require('./routes/items');
 const authRoutes = require('./routes/auth');
+const cartRoutes = require('./routes/cart');
+const orderRoutes = require('./routes/orders');
 
 app.use('/api', categoryRoutes);
 app.use('/api', itemRoutes);
 app.use('/api', authRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(err.status || 500).json({
+    message: err.message || 'Something went wrong!',
+    error: process.env.NODE_ENV === 'production' ? {} : err
+  });
 });
 
 const PORT = process.env.PORT || 3001;

@@ -1,114 +1,145 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function Home() {
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [items, setItems] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    fetchItems();
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    if (selectedCategory) {
-      fetchItemsByCategory(selectedCategory);
+  const fetchItems = async () => {
+    try {
+      setLoading(true);
+      let url = '/api/items';
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append('category', selectedCategory);
+      if (minPrice) params.append('minPrice', minPrice);
+      if (maxPrice) params.append('maxPrice', maxPrice);
+      if (sortBy) params.append('sortBy', sortBy);
+      if (params.toString()) url += `?${params.toString()}`;
+      
+      const response = await axios.get(url);
+      setItems(response.data);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+      setError('Failed to load items. Please try again later.');
+    } finally {
+      setLoading(false);
     }
-  }, [selectedCategory]);
+  };
 
   const fetchCategories = async () => {
     try {
       const response = await axios.get('/api/categories');
       setCategories(response.data);
-      if (response.data.length > 0) {
-        setSelectedCategory(response.data[0]);
-      }
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
   };
 
-  const fetchItemsByCategory = async (categoryId) => {
+  const handleAddToCart = async (item) => {
     try {
-      const response = await axios.get(`/api/items?category=${categoryId}`);
-      setItems(response.data);
+      await axios.post('/api/cart/add', { itemId: item._id, quantity: 1 });
+      alert('Item added to cart!');
     } catch (error) {
-      console.error('Error fetching items:', error);
+      console.error('Error adding item to cart:', error);
+      alert('Failed to add item to cart. Please try again.');
     }
   };
 
-  const handleCategoryClick = (category) => {
-    setSelectedCategory(category);
-    setSelectedItem(null);
+  const handleFilterChange = () => {
+    fetchItems();
   };
 
-  const handleItemClick = (item) => {
-    setSelectedItem(item);
-  };
+  if (loading) {
+    return <div className="text-center">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong className="font-bold">Error!</strong>
+        <span className="block sm:inline"> {error}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center text-indigo-600">Welcome to Our Store</h1>
+      <h1 className="text-4xl font-bold mb-8 text-center">FoodExpress Delivery</h1>
       
-      {/* Category Selection */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4 text-gray-700">Browse by Category</h2>
-        <div className="flex flex-wrap gap-2">
+      {/* Filtering options */}
+      <div className="mb-8 flex flex-wrap gap-4">
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="p-2 border rounded"
+        >
+          <option value="">All Categories</option>
           {categories.map(category => (
-            <button
-              key={category._id}
-              onClick={() => handleCategoryClick(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-150 ${
-                selectedCategory?._id === category._id
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-indigo-100'
-              }`}
-            >
-              {category.name}
-            </button>
+            <option key={category._id} value={category.name}>{category.name}</option>
           ))}
-        </div>
+        </select>
+        <input
+          type="number"
+          placeholder="Min Price"
+          value={minPrice}
+          onChange={(e) => setMinPrice(e.target.value)}
+          className="p-2 border rounded"
+        />
+        <input
+          type="number"
+          placeholder="Max Price"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
+          className="p-2 border rounded"
+        />
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="p-2 border rounded"
+        >
+          <option value="">Sort By</option>
+          <option value="price:asc">Price: Low to High</option>
+          <option value="price:desc">Price: High to Low</option>
+        </select>
+        <button
+          onClick={handleFilterChange}
+          className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+        >
+          Apply Filters
+        </button>
       </div>
       
-      {/* Item Grid */}
-      {!selectedItem && (
-        <div>
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800">{selectedCategory?.name}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map(item => (
-              <div 
-                key={item._id} 
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                onClick={() => handleItemClick(item)}
+      {/* Items Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {items.map(item => (
+          <div key={item._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="p-4">
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">{item.name}</h3>
+              <p className="text-gray-600 mb-2">{item.description}</p>
+              <p className="text-green-600 font-bold text-lg mb-2">${item.price.toFixed(2)}</p>
+              <button 
+                onClick={() => handleAddToCart(item)}
+                className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
               >
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.name}</h3>
-                  <p className="text-indigo-600 font-bold">${item.price.toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
+                Add to Cart
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Item Details */}
-      {selectedItem && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <button 
-            onClick={() => setSelectedItem(null)}
-            className="mb-4 text-indigo-600 hover:text-indigo-800"
-          >
-            &larr; Back to items
-          </button>
-          <h2 className="text-2xl font-bold mb-4">{selectedItem.name}</h2>
-          <p className="text-gray-600 mb-4">{selectedItem.description}</p>
-          <p className="text-xl font-bold text-indigo-600 mb-4">${selectedItem.price.toFixed(2)}</p>
-          <button className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition-colors duration-150">
-            Add to Basket
-          </button>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
