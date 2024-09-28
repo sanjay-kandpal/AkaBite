@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+
 function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +27,7 @@ function Cart() {
     } catch (error) {
       console.error('Error fetching cart items:', error);
       setError('Failed to load cart items. Please try again later.');
-      setCartItems(false)
+      setCartItems([])
     } finally {
       setLoading(false);
     }
@@ -39,6 +40,16 @@ function Cart() {
         return;
       }
       
+      // check stock availability
+      const cartItem = cartItems.find(item=> item._id === itemId);
+      const response = await api.get(`/items/${cartItem.item._id}`);
+      const availableStock = response.data.stockQuantity
+
+      if(newQuantity > availableStock){
+        alert(`Sorry, only ${availableStock} items are available in stock.`);
+        newQuantity = availableStock;
+      }
+
       await api.put(`/cart/update/${itemId}`, { quantity: newQuantity });
       setCartItems(prevItems =>
         prevItems.map(item =>
@@ -53,15 +64,15 @@ function Cart() {
 
   const handleRemoveItem = async (itemId) => {
     try {
-      await api.delete(`/cart/remove/${itemId}`);
-      setCartItems(prevItems => prevItems.filter(item => item._id !== itemId));
+      const response = await api.delete(`/cart/remove/${itemId}`);
+      setCartItems(response.data.items || []);
     } catch (error) {
       console.error('Error removing item from cart:', error);
       alert('Failed to remove item from cart. Please try again.');
     }
   };
 
-  const calculateTotal = () => {
+  const calculateTotal = useCallback(() => {
     let total = 0;
     cartItems.forEach((item, index) => {
       console.log(`Item ${index + 1} price:`, item.item.price);
@@ -73,7 +84,7 @@ function Cart() {
     });
   
     return total.toFixed(2);
-  };
+  },[cartItems]);
 
   if (loading) {
     return <div className="text-center">Loading...</div>;
@@ -88,7 +99,7 @@ function Cart() {
     );
   }
   
-  console.log(cartItems[0].item.price.toFixed(2));
+  // console.log(cartItems[0].item.price.toFixed(2));
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
