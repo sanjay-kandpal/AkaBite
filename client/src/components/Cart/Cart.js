@@ -8,7 +8,7 @@ function Cart() {
   const [missingItems, setMissingItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated,checkAuthStatus } = useAuth();
   const navigate = useNavigate();
 
   const fetchCartItems = async () => {
@@ -33,9 +33,15 @@ function Cart() {
     if (isAuthenticated) {
       fetchCartItems();
     } else {
-      setLoading(false);
+      checkAuthStatus().then(() => {
+        if (isAuthenticated) {
+          fetchCartItems();
+        } else {
+          setLoading(false);
+        }
+      });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated,checkAuthStatus]);
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     try {

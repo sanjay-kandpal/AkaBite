@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { Link } from 'react-router-dom';
-
+import { useAuth } from '../../contexts/AuthContext';
 function Home() {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -11,16 +11,16 @@ function Home() {
   const [sortBy, setSortBy] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   useEffect(() => {
     fetchItems();
     fetchCategories();
-  }, []);
+  }, [authLoading,isAuthenticated]);
 
   const fetchItems = async () => {
     try {
       setLoading(true);
-      let url = '/api/items';
+      let url = '/items';
       const params = new URLSearchParams();
       if (selectedCategory) params.append('category', selectedCategory);
       if (minPrice) params.append('minPrice', minPrice);
@@ -28,7 +28,7 @@ function Home() {
       if (sortBy) params.append('sortBy', sortBy);
       if (params.toString()) url += `?${params.toString()}`;
       
-      const response = await axios.get(url);
+      const response = await api.get(url);
       setItems(response.data);
     } catch (error) {
       console.error('Error fetching items:', error);
@@ -40,7 +40,7 @@ function Home() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('/api/categories');
+      const response = await api.get('/categories');
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);

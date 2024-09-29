@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+
 //Verify token
 router.get('/verify', async (req, res) => {
   const token = req.header('x-auth-token');

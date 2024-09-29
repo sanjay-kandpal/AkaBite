@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Item = require('../models/Item');
+const authMiddleware = require('../middleware/auth');
 
-router.get('/items', async (req, res) => {
+
+router.get('/items',authMiddleware, async (req, res) => {
   try {
     const { category, minPrice, maxPrice, sortBy } = req.query;
     let query = {};
@@ -31,7 +33,7 @@ router.get('/items', async (req, res) => {
 });
 
 // New route for fetching a single item by ID
-router.get('/items/:id', async (req, res) => {
+router.get('/items/:id',authMiddleware, async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
     if (!item) {

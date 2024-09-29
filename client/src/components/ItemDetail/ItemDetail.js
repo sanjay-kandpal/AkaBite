@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import api from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 function ItemDetail() {
   const [item, setItem] = useState(null);
@@ -11,6 +11,7 @@ function ItemDetail() {
   const [addToCartError, setAddToCartError] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     fetchItemDetails();
@@ -19,7 +20,7 @@ function ItemDetail() {
   const fetchItemDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/items/${id}`);
+      const response = await api.get(`/items/${id}`);
       setItem(response.data);
       setQuantity(response.data.stockQuantity > 0 ? 1 : 0);
     } catch (error) {
@@ -36,6 +37,10 @@ function ItemDetail() {
   };
 
   const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      setAddToCartError('Please log in to add items to your cart.');
+      return;
+    }
     try {
       setAddToCartError(null);
       const response = await api.post('/cart/add', { itemId: item._id, quantity });
