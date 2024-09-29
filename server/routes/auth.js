@@ -3,6 +3,8 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const DeviceSession = require('../models/Device');
+const { v4: uuidv4 } = require('uuid');
 
 //Verify token
 router.get('/verify', async (req, res) => {
@@ -58,7 +60,7 @@ router.post('/register', async (req, res) => {
 // Login route (update)
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password,deviceId } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Invalid email or password' });
@@ -67,8 +69,15 @@ router.post('/login', async (req, res) => {
     if (!validPassword) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user._id,deviceId }, process.env.JWT_SECRET, { expiresIn: '1h' });
     
+    //create or update device session
+    await DeviceSession.findOneAndUpdate(
+      { user: user._id, deviceId },
+      { token, lastActive: Date.now(), isActive: true },
+      { upsert: true, new: true }
+    );
+
     // Update last login
     user.lastLogin = Date.now();
     await user.save();
@@ -105,6 +114,49 @@ router.post('/refresh-token', async (req, res) => {
   } catch (error) {
     console.error('Error refreshing token:', error);
     res.status(500).json({ message: 'Error refreshing token' });
+  }
+});
+
+
+// Add a new route to logout from a specific device
+router.post('/logout', async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    const token = req.header('x-auth-token');
+    
+    if (!token) {
+      return res.status(401).json({ message: 'No token, authorization denied' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    await DeviceSession.findOneAndUpdate(
+      { user: decoded.userId, deviceId },
+      { isActive: false }
+    );
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Error logging out:', error);
+    res.status(500).json({ message: 'Error logging out', error: error.message });
+  }
+});
+
+// Add a new route to get all active sessions for a user
+router.get('/sessions', async (req, res) => {
+  try {
+    const token = req.header('x-auth-token');
+    
+    if (!token) {
+      return res.status(401).json({ message: 'No token, authorization denied' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const sessions = await DeviceSession.find({ user: decoded.userId, isActive: true });
+
+    res.json(sessions);
+  } catch (error) {
+    console.error('Error fetching sessions:', error);
+    res.status(500).json({ message: 'Error fetching sessions', error: error.message });
   }
 });
 

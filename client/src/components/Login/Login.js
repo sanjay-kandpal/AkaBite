@@ -1,19 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [ deviceId, setDeviceId ] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+
+
+  useEffect(() => {
+    // Generate or retrieve device ID
+    let storedDeviceId = localStorage.getItem('deviceId');
+    if (!storedDeviceId) {
+      storedDeviceId = uuidv4();
+      localStorage.setItem('deviceId', storedDeviceId);
+    }
+    setDeviceId(storedDeviceId);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      await login(email, password);
+      await login(email, password,deviceId);
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Login failed:', error);

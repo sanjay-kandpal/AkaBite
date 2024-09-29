@@ -1,5 +1,3 @@
-// models/Device.js
-
 const mongoose = require('mongoose');
 
 const DeviceSessionSchema = new mongoose.Schema({
@@ -9,6 +7,10 @@ const DeviceSessionSchema = new mongoose.Schema({
     required: true
   },
   deviceId: {
+    type: String,
+    required: true
+  },
+  token: {
     type: String,
     required: true
   },
