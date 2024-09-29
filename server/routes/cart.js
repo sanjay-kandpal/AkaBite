@@ -80,29 +80,63 @@ router.post('/add', auth, async (req, res) => {
 router.put('/update/:itemId', auth, async (req, res) => {
   try {
     const { quantity } = req.body;
+    const itemIdToUpdate = req.params.itemId;
+    
+    console.log('Checking availability for cart item:');
+    console.log('User ID:', req.user);
+    console.log('Item ID to check:', itemIdToUpdate);
+    console.log('Requested quantity:', quantity);
+
     const cart = await Cart.findOne({ user: req.user });
+    
     if (!cart) {
       return res.status(404).json({ message: 'Cart not found' });
     }
-    const cartItemIndex = cart.items.findIndex(item => item.item.toString() === req.params.itemId);
-    if (cartItemIndex === -1) {
+
+    // Try to find the item using _id first
+    let cartItem = cart.items.find(item => item._id.toString() === itemIdToUpdate);
+    
+    // If not found by _id, try to find by item reference
+    if (!cartItem) {
+      cartItem = cart.items.find(item => item.item.toString() === itemIdToUpdate);
+    }
+
+    if (!cartItem) {
+      console.log('Item not found in cart');
       return res.status(404).json({ message: 'Item not found in cart' });
     }
-    const item = await Item.findById(req.params.itemId);
+
+    const item = await Item.findById(cartItem.item);
     if (!item) {
-      return res.status(404).json({ message: 'Item not found' });
+      return res.status(404).json({ message: 'Item not found in inventory' });
     }
-    if (item.stockQuantity < quantity) {
-      return res.status(400).json({ message: 'Not enough stock available', availableStock: item.stockQuantity });
+
+    if (quantity > cartItem.quantity) {
+      // Only check stock if quantity is being increased
+      if (item.stockQuantity < quantity) {
+        return res.status(400).json({ 
+          message: 'Not enough stock available', 
+          availableStock: item.stockQuantity,
+          requestedQuantity: quantity
+        });
+      }
+    } else if (quantity < 0) {
+      return res.status(400).json({ message: 'Quantity cannot be negative' });
     }
-    cart.items[cartItemIndex].quantity = quantity;
-    await cart.save();
-    res.json(cart);
+
+    // If we reach here, the requested quantity is available
+    res.json({ 
+      message: 'Requested quantity is available',
+      itemId: itemIdToUpdate,
+      requestedQuantity: quantity,
+      availableStock: item.stockQuantity
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Error updating item quantity', error: error.message });
+    console.error('Error checking item availability:', error);
+    res.status(500).json({ message: 'Error checking item availability', error: error.message });
   }
 });
-
 // Remove item from cart
 router.delete('/remove/:itemId', auth, async (req, res) => {
   try {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import Loader from '../Loader/Loader'
 
 function OrderHistory() {
   const [orders, setOrders] = useState([]);
@@ -23,15 +24,14 @@ function OrderHistory() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      console.log('Token before order history request:', token); // Add this line for debugging
+      console.log('Token before order history request:', token);
       const response = await api.get('/orders/history');
-      console.log('Order history response:', response.data); // Add this line for debugging
+      console.log('Order history response:', response.data);
       setOrders(response.data);
     } catch (error) {
       console.error('Error fetching order history:', error);
       setError('Failed to load order history. Please try again later.');
       if (error.response && error.response.status === 401) {
-        // Redirect to login if unauthorized
         navigate('/login');
       }
     } finally {
@@ -40,7 +40,7 @@ function OrderHistory() {
   };
 
   if (loading) {
-    return <div className="text-center">Loading...</div>;
+    return <Loader message="Loading your order history..." />;
   }
 
   if (error) {
@@ -54,14 +54,14 @@ function OrderHistory() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8 text-center">Order History</h1>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-8 text-center">Order History</h1>
       {orders.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {orders.map(order => (
-            <div key={order._id} className="bg-white shadow-md rounded-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Order #{order._id}</h2>
-                <span className={`px-2 py-1 rounded text-sm ${
+            <div key={order._id} className="bg-white shadow-md rounded-lg p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-0">Order #{order._id}</h2>
+                <span className={`px-2 py-1 rounded text-xs sm:text-sm ${
                   order.status === 'completed' ? 'bg-green-200 text-green-800' :
                   order.status === 'processing' ? 'bg-yellow-200 text-yellow-800' :
                   'bg-gray-200 text-gray-800'
@@ -69,17 +69,17 @@ function OrderHistory() {
                   {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </span>
               </div>
-              <p className="text-gray-600 mb-4">Ordered on: {new Date(order.createdAt).toLocaleDateString()}</p>
+              <p className="text-gray-600 text-sm mb-4">Ordered on: {new Date(order.createdAt).toLocaleDateString()}</p>
               <div className="space-y-2">
                 {order.items.map(item => (
-                  <div key={item._id} className="flex justify-between items-center">
-                    <span>{item.item.name} x {item.quantity}</span>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                  <div key={item._id} className="flex justify-between items-center text-sm">
+                    <span className="truncate mr-2">{item.item.name} x {item.quantity}</span>
+                    <span className="whitespace-nowrap">${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
               <div className="border-t mt-4 pt-4">
-                <div className="flex justify-between items-center font-bold">
+                <div className="flex justify-between items-center font-bold text-sm sm:text-base">
                   <span>Total Amount:</span>
                   <span>${order.totalAmount.toFixed(2)}</span>
                 </div>

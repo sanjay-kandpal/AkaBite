@@ -102,7 +102,7 @@ export default function Login() {
             </div>
           )}
           <p className="text-lg md:text-xl text-left animate-slide-in-color leading-relaxed ml-2" style={{animationDelay: '0.6s'}}>
-            Where travelers<br></br> <span className="text-6xl font-bold">O</span><span className="text-5xl font-bold">rder</span> their <span className='text-5xl font-bold'>f</span>oo<span className='text-5xl font-bold'>d</span> <br />
+            Where travelers<br></br> <span className="text-6xl font-bold">O</span><span className="text-5xl font-bold">rder</span>  <span className='text-5xl font-bold'>f</span>oo<span className='text-5xl font-bold'>d</span> <br />
              <span className='text-6xl font-bold'>E</span>ase...
           </p>
         </div>

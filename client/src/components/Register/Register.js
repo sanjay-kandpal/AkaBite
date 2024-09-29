@@ -129,14 +129,14 @@ export default function Register() {
           <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-orange-500">Register</h2>
           {error && <p className={`mb-4 text-center ${error.includes('successful') ? 'text-green-500' : 'text-red-500'}`}>{error}</p>}
           {isLoading ? (
-            <div className="flex justify-center items-center">
+            <div className="flex flex-col items-center justify-center h-64"> {/* Centered loader container */}
               <svg width="100" height="100" viewBox="0 0 100 100" className="animate-[plate-spin_3s_linear_infinite]">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="#f97316" strokeWidth="5" />
                 <circle cx="50" cy="25" r="10" fill="#f97316" className="animate-[food-bounce_1s_ease-in-out_infinite]" />
                 <circle cx="25" cy="50" r="10" fill="#f97316" className="animate-[food-bounce_1s_ease-in-out_infinite_0.3s]" />
                 <circle cx="75" cy="50" r="10" fill="#f97316" className="animate-[food-bounce_1s_ease-in-out_infinite_0.6s]" />
               </svg>
-              <p className="ml-4 text-lg font-medium text-orange-500">Moving to Login...</p>
+              <p className="mt-4 text-lg font-medium text-orange-500">Moving to Login...</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
