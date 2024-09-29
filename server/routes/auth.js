@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const DeviceSession = require('../models/Device');
-const { v4: uuidv4 } = require('uuid');
+
 
 //Verify token
 router.get('/verify', async (req, res) => {
