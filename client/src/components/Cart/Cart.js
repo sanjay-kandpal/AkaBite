@@ -11,6 +11,8 @@ function Cart() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState(null);
   const { isAuthenticated, checkAuthStatus } = useAuth();
   const navigate = useNavigate();
 
@@ -69,6 +71,15 @@ function Cart() {
         );
         setQuantityErrors(prev => ({ ...prev, [itemId]: null }));
         setNotification({ type: 'success', message: 'Quantity Available!' });
+      } else if (response.data.availableStock <= 0) {
+        setQuantityErrors(prev => ({ 
+          ...prev, 
+          [itemId]: `This item is no longer available in stock.`
+        }));
+        setNotification({ type: 'error', message: 'Item out of stock!' });
+
+        // Save updated cart to backend
+        await api.post('/cart/save', { items: cartItems });
       } else {
         setQuantityErrors(prev => ({ 
           ...prev, 
@@ -93,7 +104,7 @@ function Cart() {
       if (numValue > item.item.stockQuantity) {
         setQuantityErrors(prev => ({ 
           ...prev, 
-          [itemId]: `Quantity exceeds available stock (${item.item.stockQuantity})`
+          [itemId]: `Quantity exceeds available stock (${Math.max(0, item.item.stockQuantity)})`
         }));
       } else if (numValue <= 10) {
         setQuantityErrors(prev => ({ 
@@ -111,10 +122,15 @@ function Cart() {
     }
   };
 
-  const handleRemoveItem = async (itemId) => {
+  const handleRemoveItem = (itemId) => {
+    setItemToRemove(itemId);
+    setShowConfirmation(true);
+  };
+
+  const confirmRemoveItem = async () => {
     try {
-      await api.delete(`/cart/remove/${itemId}`);
-      setCartItems(prevItems => prevItems.filter(item => item._id !== itemId));
+      await api.delete(`/cart/remove/${itemToRemove}`);
+      setCartItems(prevItems => prevItems.filter(item => item._id !== itemToRemove));
       setNotification({ type: 'success', message: 'Item removed successfully!' });
       
       setTimeout(() => {
@@ -123,12 +139,20 @@ function Cart() {
     } catch (error) {
       console.error('Error removing item from Basket:', error);
       setNotification({ type: 'error', message: 'Failed to remove item from cart. Please try again.' });
+    } finally {
+      setShowConfirmation(false);
+      setItemToRemove(null);
     }
   };
 
-  const handleProceedToCheckout = () => {
+  const cancelRemoveItem = () => {
+    setShowConfirmation(false);
+    setItemToRemove(null);
+  };
+
+  const handleProceedToCheckout = async () => {
     const invalidItems = cartItems.filter(item => 
-      item.quantity <= 0 || item.quantity > item.item.stockQuantity || quantityErrors[item._id]
+      item.quantity <= 0 || item.quantity > Math.max(0, item.item.stockQuantity) || quantityErrors[item._id]
     );
 
     if (invalidItems.length > 0) {
@@ -138,13 +162,23 @@ function Cart() {
         message: `Cannot proceed to checkout. Please update quantities for: ${itemNames}`
       });
     } else {
-      navigate('/checkout');
+      try {
+        // Save the current cart state before proceeding to checkout
+        await api.post('/cart/save', { items: cartItems });
+        navigate('/checkout');
+      } catch (error) {
+        console.error('Error saving cart before checkout:', error);
+        setNotification({
+          type: 'error',
+          message: 'Failed to proceed to checkout. Please try again.'
+        });
+      }
     }
   };
 
   const calculateTotal = useCallback(() => {
     return cartItems
-      .filter(item => item.quantity > 0 && item.quantity <= item.item.stockQuantity && !quantityErrors[item._id])
+      .filter(item => item.quantity > 0 && item.quantity <= Math.max(0, item.item.stockQuantity) && !quantityErrors[item._id])
       .reduce((total, item) => total + item.item.price * item.quantity, 0)
       .toFixed(2);
   }, [cartItems, quantityErrors]);
@@ -152,17 +186,36 @@ function Cart() {
   const isCartValid = useCallback(() => {
     return cartItems.every(item => 
       item.quantity > 0 && 
-      item.quantity <= item.item.stockQuantity &&
+      item.quantity <= Math.max(0, item.item.stockQuantity) &&
       !quantityErrors[item._id]
     ) && cartItems.length > 0;
   }, [cartItems, quantityErrors]);
+
+  const renderQuantityOptions = (stockQuantity) => {
+    const options = [];
+    const maxOptions = Math.min(10, Math.max(0, stockQuantity));
+    
+    for (let i = 1; i <= maxOptions; i++) {
+      options.push(<option key={i} value={i}>{i}</option>);
+    }
+    
+    if (stockQuantity > 10) {
+      options.push(<option key="custom" value="custom">10+ (Custom)</option>);
+    }
+    
+    return options;
+  };
+
+  const displayStock = (stockQuantity) => {
+    return Math.max(0, stockQuantity);
+  };
 
   if (loading) {
     return <Loader message="Loading your Basket..." />;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 relative">
       <h1 className="text-3xl font-bold mb-8">Your Basket</h1>
       
       {notification && (
@@ -195,29 +248,32 @@ function Cart() {
                         <p className="text-gray-600">
                           ${cartItem.item.price ? cartItem.item.price.toFixed(2) : "Price not available"} each
                         </p>
-                        <p className="text-sm text-gray-500">In stock: {cartItem.item.stockQuantity || "N/A"}</p>
+                        <p className="text-sm text-gray-500">
+                          In stock: {displayStock(cartItem.item.stockQuantity)}
+                        </p>
                       </div>
                     </>
                   )}
                 </div>
                 <div className="flex items-center">
-                  <select
-                    value={cartItem.quantity > 10 ? 'custom' : cartItem.quantity}
-                    onChange={(e) => handleQuantityChange(cartItem._id, e.target.value)}
-                    className="border rounded px-2 py-1 w-24 mr-2"
-                  >
-                    {[...Array(Math.min(10, cartItem.item.stockQuantity)).keys()].map(i => (
-                      <option key={i + 1} value={i + 1}>{i + 1}</option>
-                    ))}
-                    {cartItem.item.stockQuantity > 10 && <option value="custom">10+ (Custom)</option>}
-                  </select>
-                  {cartItem.quantity > 10 && (
+                  {displayStock(cartItem.item.stockQuantity) > 0 ? (
+                    <select
+                      value={cartItem.quantity > 10 ? 'custom' : cartItem.quantity}
+                      onChange={(e) => handleQuantityChange(cartItem._id, e.target.value)}
+                      className="border rounded px-2 py-1 w-24 mr-2"
+                    >
+                      {renderQuantityOptions(cartItem.item.stockQuantity)}
+                    </select>
+                  ) : (
+                    <p className="text-red-500">Out of stock</p>
+                  )}
+                  {cartItem.quantity > 10 && displayStock(cartItem.item.stockQuantity) > 0 && (
                     <input
                       type="number"
                       value={customQuantities[cartItem._id] || ''}
                       onChange={(e) => handleCustomQuantityChange(cartItem._id, e.target.value)}
                       min="11"
-                      max={cartItem.item.stockQuantity}
+                      max={displayStock(cartItem.item.stockQuantity)}
                       className="border rounded px-2 py-1 w-20 mr-2"
                       placeholder="Enter quantity"
                     />
@@ -254,6 +310,38 @@ function Cart() {
             </button>
           </div>
         </>
+      )}
+
+      {/* Confirmation Popup */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="my-modal">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Remove Item</h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Are you sure you want to remove this item from your cart?
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
+                <button
+                  id="ok-btn"
+                  className="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+                  onClick={confirmRemoveItem}
+                >
+                  Yes
+                </button>
+                <button
+                  id="cancel-btn"
+                  className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md w-24 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onClick={cancelRemoveItem}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -129,7 +129,7 @@ export default function Register() {
           <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-orange-500">Register</h2>
           {error && <p className={`mb-4 text-center ${error.includes('successful') ? 'text-green-500' : 'text-red-500'}`}>{error}</p>}
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-64"> {/* Centered loader container */}
+            <div className="flex flex-col items-center justify-center h-64">
               <svg width="100" height="100" viewBox="0 0 100 100" className="animate-[plate-spin_3s_linear_infinite]">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="#f97316" strokeWidth="5" />
                 <circle cx="50" cy="25" r="10" fill="#f97316" className="animate-[food-bounce_1s_ease-in-out_infinite]" />
@@ -139,48 +139,56 @@ export default function Register() {
               <p className="mt-4 text-lg font-medium text-orange-500">Moving to Login...</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-700">
-                  Email:
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    validateEmail(e.target.value);
-                  }}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-                {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
-              </div>
-              <div className="mb-6">
-                <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-700">
-                  Password:
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    validatePassword(e.target.value);
-                  }}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-                {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-              >
-                Register
-              </button>
-            </form>
+            <>
+              <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-700">
+                    Email:
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      validateEmail(e.target.value);
+                    }}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
+                </div>
+                <div className="mb-6">
+                  <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-700">
+                    Password:
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      validatePassword(e.target.value);
+                    }}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 mb-4"
+                >
+                  Register
+                </button>
+              </form>
+              <p className="text-center text-sm text-gray-600">
+                Already have an account?{' '}
+                <Link to="/login" className="text-orange-500 hover:text-orange-600 font-medium">
+                  Login here
+                </Link>
+              </p>
+            </>
           )}
         </div>
       </div>

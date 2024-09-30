@@ -178,4 +178,34 @@ router.delete('/remove/:itemId', auth, async (req, res) => {
     res.status(500).json({ message: 'Error removing item from cart', error: error.message });
   }
 });
+// New route for saving cart data
+router.post('/save', auth, async (req, res) => {
+  try {
+    const { items } = req.body;
+
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({ message: 'Invalid cart data' });
+    }
+
+    let cart = await Cart.findOne({ user: req.user });
+
+    if (!cart) {
+      cart = new Cart({ user: req.user, items: [] });
+    }
+
+    // Update cart items
+    cart.items = items.map(item => ({
+      item: item.item._id,
+      quantity: item.quantity
+    }));
+
+    await cart.save();
+
+    res.status(200).json({ message: 'Cart saved successfully', cart });
+  } catch (error) {
+    console.error('Error saving cart:', error);
+    res.status(500).json({ message: 'Error saving cart', error: error.message });
+  }
+});
+
 module.exports = router;
