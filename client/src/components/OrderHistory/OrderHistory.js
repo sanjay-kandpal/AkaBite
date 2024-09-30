@@ -25,7 +25,7 @@ function OrderHistory() {
       setLoading(true);
       const token = localStorage.getItem('token');
       console.log('Token before order history request:', token);
-      const response = await api.get('/orders/history');
+      const response = await api.get('api/orders/history');
       console.log('Order history response:', response.data);
       setOrders(response.data);
     } catch (error) {

@@ -117,24 +117,51 @@ router.post('/refresh-token', async (req, res) => {
   }
 });
 
-
-// Add a new route to logout from a specific device
 router.post('/logout', async (req, res) => {
+  console.log('Logout route called');
   try {
     const { deviceId } = req.body;
     const token = req.header('x-auth-token');
     
+    console.log('Received deviceId:', deviceId);
+    console.log('Received token:', token);
+
     if (!token) {
+      console.log('No token provided');
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    await DeviceSession.findOneAndUpdate(
-      { user: decoded.userId, deviceId },
-      { isActive: false }
-    );
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Token decoded successfully:', decoded);
 
-    res.json({ message: 'Logged out successfully' });
+      const updatedSession = await DeviceSession.findOneAndUpdate(
+        { user: decoded.userId, deviceId },
+        { isActive: false, token: null },
+        { new: true }
+      );
+
+      console.log('Updated session:', updatedSession);
+
+      if (!updatedSession) {
+        console.log('No session found to update');
+        return res.status(404).json({ message: 'No active session found for this device' });
+      }
+
+      res.json({ message: 'Logged out successfully' });
+    } catch (jwtError) {
+      console.error('JWT verification failed:', jwtError);
+      // If token is invalid or expired, we still want to clear the session
+      const updatedSession = await DeviceSession.findOneAndUpdate(
+        { deviceId },
+        { isActive: false, token: null },
+        { new: true }
+      );
+
+      console.log('Updated session (with invalid token):', updatedSession);
+
+      res.json({ message: 'Logged out successfully' });
+    }
   } catch (error) {
     console.error('Error logging out:', error);
     res.status(500).json({ message: 'Error logging out', error: error.message });

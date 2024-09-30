@@ -19,7 +19,7 @@ function Cart() {
   const fetchCartItems = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/cart');
+      const response = await api.get('api/cart');
       setCartItems(response.data.cart.items || []);
       
       // Initialize custom quantities for items with quantity > 10
@@ -61,7 +61,7 @@ function Cart() {
         newQuantity = parseInt(newQuantity, 10);
       }
 
-      const response = await api.put(`/cart/update/${itemId}`, { quantity: newQuantity });
+      const response = await api.put(`api/cart/update/${itemId}`, { quantity: newQuantity });
       
       if (response.data.message === 'Requested quantity is available') {
         setCartItems(prevItems => 
@@ -79,7 +79,7 @@ function Cart() {
         setNotification({ type: 'error', message: 'Item out of stock!' });
 
         // Save updated cart to backend
-        await api.post('/cart/save', { items: cartItems });
+        await api.post('api/cart/save', { items: cartItems });
       } else {
         setQuantityErrors(prev => ({ 
           ...prev, 
@@ -129,7 +129,7 @@ function Cart() {
 
   const confirmRemoveItem = async () => {
     try {
-      await api.delete(`/cart/remove/${itemToRemove}`);
+      await api.delete(`api/cart/remove/${itemToRemove}`);
       setCartItems(prevItems => prevItems.filter(item => item._id !== itemToRemove));
       setNotification({ type: 'success', message: 'Item removed successfully!' });
       
@@ -164,7 +164,7 @@ function Cart() {
     } else {
       try {
         // Save the current cart state before proceeding to checkout
-        await api.post('/cart/save', { items: cartItems });
+        await api.post('api/cart/save', { items: cartItems });
         navigate('/checkout');
       } catch (error) {
         console.error('Error saving cart before checkout:', error);

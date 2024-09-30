@@ -1,8 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
 import api from '../services/api';
 import { v4 as uuidv4 } from 'uuid';
-
 
 const AuthContext = createContext(null);
 
@@ -25,39 +23,40 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('deviceId', storedDeviceId);
     }
     setDeviceId(storedDeviceId);
+    console.log('Device ID initialized:', storedDeviceId);
   };
 
   const checkAuthStatus = async () => {
+    console.log('Checking auth status');
     const token = localStorage.getItem('token');
-    const storedDeviceId = localStorage.getItem('deviceId');
-    if (token && storedDeviceId) {
+    console.log('Token from localStorage:', token);
+    if (token) {
       try {
-        const response = await axios.get('/api/auth/verify', {
-          headers: { 'x-auth-token': token }
-        });
+        const response = await api.get('/api/auth/verify');
+        console.log('Auth verification response:', response.data);
         setUser(response.data);
         setIsAuthenticated(true);
         fetchActiveSessions();
       } catch (error) {
         console.error('Token verification failed:', error);
-        localStorage.removeItem('token');
-        setIsAuthenticated(false);
-        setUser(null);
+        await logoutInternal();
       }
     } else {
-      setIsAuthenticated(false);
-      setUser(null);
+      console.log('No token found, logging out internally');
+      await logoutInternal();
     }
     setIsLoading(false);
   };
 
   const login = async (email, password) => {
-  try {
-      const response = await api.post('/auth/login', { email, password,deviceId });
+    try {
+      console.log('Attempting login');
+      const response = await api.post('/api/auth/login', { email, password, deviceId });
+      console.log('Login response:', response.data);
       const { token, userId } = response.data;
       localStorage.setItem('token', token);
       setIsAuthenticated(true);
-      await checkAuthStatus(); // Fetch user data after successful login
+      await checkAuthStatus();
       return true;
     } catch (error) {
       console.error('Login failed:', error);
@@ -65,24 +64,43 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async (logoutDeviceId = null) => {
-    try {
-      if (logoutDeviceId) {
-        await api.post('/auth/logout', { deviceId: logoutDeviceId });
-      } else {
-        await api.post('/auth/logout', { deviceId });
-      }
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+  const logoutInternal = async () => {
+    console.log('Logging out internally');
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setUser(null);
+    setActiveSessions([]);
+  };
+
+  const logout = async (logoutDeviceId = null) => {
+    console.log('Logout called with deviceId:', logoutDeviceId);
+    try {
+      const deviceToLogout = logoutDeviceId || deviceId;
+      console.log('Sending logout request for device:', deviceToLogout);
+      const response = await api.post('/api/auth/logout', { deviceId: deviceToLogout });
+      console.log('Logout response:', response.data);
+      
+      if (!logoutDeviceId || logoutDeviceId === deviceId) {
+        console.log('Logging out current device');
+        await logoutInternal();
+      } else {
+        console.log('Logging out different device, updating sessions');
+        await fetchActiveSessions();
+      }
+    } catch (error) {
+      console.error('Logout failed:', error);
+      if (!logoutDeviceId || logoutDeviceId === deviceId) {
+        console.log('Logout failed, but still logging out locally');
+        await logoutInternal();
+      }
+    }
   };
 
   const fetchActiveSessions = async () => {
     try {
-      const response = await api.get('/auth/sessions');
+      console.log('Fetching active sessions');
+      const response = await api.get('/api/auth/sessions');
+      console.log('Active sessions:', response.data);
       setActiveSessions(response.data);
     } catch (error) {
       console.error('Failed to fetch active sessions:', error);
@@ -90,8 +108,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logoutDevice = async (logoutDeviceId) => {
+    console.log('Logging out device:', logoutDeviceId);
     await logout(logoutDeviceId);
-    fetchActiveSessions();
   };
   
   return (
@@ -109,7 +127,6 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-
 };
 
 export const useAuth = () => useContext(AuthContext);

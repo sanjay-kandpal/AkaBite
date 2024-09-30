@@ -28,7 +28,7 @@ function Checkout() {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/cart');
+      const response = await api.get('api/cart');
       setCart(response.data.cart);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -43,7 +43,7 @@ function Checkout() {
 
   const handlePlaceOrder = async () => {
     try {
-      const response = await api.post('/orders/create');
+      const response = await api.post('api/orders/create');
       if (response.data.stockError) {
         setStockError(response.data.stockError);
       } else {

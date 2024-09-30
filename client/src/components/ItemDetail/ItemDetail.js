@@ -25,7 +25,7 @@ function ItemDetail() {
   const fetchItemDetails = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/items/${id}`);
+      const response = await api.get(`api/items/${id}`);
       setItem(response.data);
       setQuantity(response.data.stockQuantity > 0 ? 1 : 0);
     } catch (error) {
@@ -86,7 +86,7 @@ function ItemDetail() {
     }
     try {
       setAddToCartError(null);
-      const response = await api.post('/cart/add', { itemId: item._id, quantity });
+      const response = await api.post('api/cart/add', { itemId: item._id, quantity });
       console.log('Add to cart response:', response.data);
       setSuccessMessage(`${quantity} ${item.name}(s) added to cart!`);
       setTimeout(() => {

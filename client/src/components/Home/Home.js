@@ -29,7 +29,9 @@ function Home() {
   const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/items');
+      
+      const response = await api.get('api/items');
+      
       setItems(response.data);
       setFilteredItems(response.data);
     } catch (error) {

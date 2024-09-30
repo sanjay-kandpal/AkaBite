@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+
 import { v4 as uuidv4 } from 'uuid';
+import api from '../../services/api';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -62,7 +63,7 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/register', { email, password, deviceId });
+      const response = await api.post('/api/auth/register', { email, password, deviceId });
       setError('Registered successfully');
       setEmail('');
       setPassword('');

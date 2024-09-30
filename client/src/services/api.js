@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api', // adjust if your API has a different base URL
+  baseURL: process.env.REACT_APP_API_URL || 'https://backend-host-azure.onrender.com/api' , // adjust if your API has a different base URL
 });
 
 // Request interceptor
