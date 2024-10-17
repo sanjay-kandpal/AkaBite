@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-import Loader from '../Loader/Loader'
+import { useRouter } from 'next/router';
+import api from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import Loader from '../components/Loader/Loader'
 
 function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const router = useRouter();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -17,6 +17,7 @@ function OrderHistory() {
     } else {
       setLoading(false);
       setError('Please log in to view your order history.');
+      router.push('/login');
     }
   }, [isAuthenticated]);
 
@@ -32,7 +33,7 @@ function OrderHistory() {
       console.error('Error fetching order history:', error);
       setError('Failed to load order history. Please try again later.');
       if (error.response && error.response.status === 401) {
-        navigate('/login');
+        router.push('/login');
       }
     } finally {
       setLoading(false);

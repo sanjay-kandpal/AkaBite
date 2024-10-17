@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import api from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-import Loader from '../Loader/Loader';
-import ImageWithFallback from '../ImageWithFallback/ImageWithFallback';
+import { useRouter } from 'next/router';
 
-function ItemDetail() {
+import api from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
+import Loader from '../../components/Loader/Loader';
+import ImageWithFallback from '../../components/ImageWithFallback/ImageWithFallback';
+
+export default function ItemDetail() {
   const [item, setItem] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [customQuantity, setCustomQuantity] = useState('');
@@ -14,8 +15,8 @@ function ItemDetail() {
   const [addToCartError, setAddToCartError] = useState(null);
   const [quantityError, setQuantityError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const router = useRouter();
+  const {id} = router.query;
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -91,7 +92,7 @@ function ItemDetail() {
       setSuccessMessage(`${quantity} ${item.name}(s) added to cart!`);
       setTimeout(() => {
         setSuccessMessage(null);
-        navigate('/cart');
+        router.push('/cart');
       }, 2000);
     } catch (error) {
       console.error('Error adding item to cart:', error.response?.data || error.message);
@@ -107,7 +108,7 @@ function ItemDetail() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <button onClick={() => navigate(-1)} className="mb-4 bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600">Back</button>
+      <button onClick={() => router.back()} className="mb-4 bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600">Back</button>
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <ImageWithFallback src={item.imageUrl} alt={item.name} className="w-full h-64 object-cover" />
         <div className="p-4">
@@ -175,5 +176,3 @@ function ItemDetail() {
     </div>
   );
 }
-
-export default ItemDetail;

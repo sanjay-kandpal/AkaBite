@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-import Loader from '../Loader/Loader';
+import { useRouter } from 'next/router';
+import api from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import Loader from '../components/Loader/Loader';
 function Checkout() {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stockError, setStockError] = useState(null);
   const [orderSuccess, setOrderSuccess] = useState(false);
-  const navigate = useNavigate();
+  const  router  = useRouter();
   const { isAuthenticated } = useAuth();
 
   const GST_RATE = 0.18; // 18% GST
@@ -21,9 +21,9 @@ function Checkout() {
     } else {
       setLoading(false);
       setError('Please log in to proceed to checkout.');
-      navigate('/login');
+      router.push('/login');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, router]);
 
   const fetchCart = async () => {
     try {
@@ -34,7 +34,7 @@ function Checkout() {
       console.error('Error fetching cart:', error);
       setError('Failed to load cart. Please try again later.');
       if (error.response && error.response.status === 401) {
-        navigate('/login');
+        router.push('/login');
       }
     } finally {
       setLoading(false);
@@ -49,7 +49,7 @@ function Checkout() {
       } else {
         setOrderSuccess(true);
         setTimeout(() => {
-          navigate('/order-history');
+          router.push('/order-history');
         }, 3000);
       }
     } catch (error) {
@@ -60,7 +60,7 @@ function Checkout() {
         setError('Failed to place order. Please try again.');
       }
       if (error.response && error.response.status === 401) {
-        navigate('/login');
+        router.push('/login');
       }
     }
   };

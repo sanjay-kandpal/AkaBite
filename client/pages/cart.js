@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import api from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-import Loader from '../Loader/Loader';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import api from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import Loader from '../components/Loader/Loader';
 
 function Cart() {
   const [cartItems, setCartItems] = useState([]);
@@ -14,7 +15,7 @@ function Cart() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
   const { isAuthenticated, checkAuthStatus } = useAuth();
-  const navigate = useNavigate();
+  const  router  = useRouter();
 
   const fetchCartItems = async () => {
     try {
@@ -39,18 +40,12 @@ function Cart() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isAuthenticated) {
+      router.push('/login');
+    } else if (isAuthenticated) {
       fetchCartItems();
-    } else {
-      checkAuthStatus().then(() => {
-        if (isAuthenticated) {
-          fetchCartItems();
-        } else {
-          setLoading(false);
-        }
-      });
     }
-  }, [isAuthenticated, checkAuthStatus]);
+  }, [isAuthenticated, router]);
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     try {
@@ -165,7 +160,7 @@ function Cart() {
       try {
         // Save the current cart state before proceeding to checkout
         await api.post('api/cart/save', { items: cartItems });
-        navigate('/checkout');
+        router.push('/checkout');
       } catch (error) {
         console.error('Error saving cart before checkout:', error);
         setNotification({
@@ -233,7 +228,7 @@ function Cart() {
       )}
 
       {cartItems.length === 0 ? (
-        <p>Your Basket is empty. <Link to="/" className="text-blue-500 hover:underline">Continue shopping</Link></p>
+        <p>Your Basket is empty. <Link href="/" className="text-blue-500 hover:underline">Continue shopping</Link></p>
       ) : (
         <>
           <ul className="divide-y divide-gray-200">
@@ -279,7 +274,7 @@ function Cart() {
                     />
                   )}
                   <button 
-                    onClick={() => handleRemoveItem(cartItem._id)}
+                     onClick={() => handleRemoveItem(cartItem._id)}
                     className="ml-4 text-red-500 hover:text-red-700"
                   >
                     Remove

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link'
 import ImageWithFallback from '../ImageWithFallback/ImageWithFallback';
 
 function ItemCard({ item }) {
@@ -12,10 +12,12 @@ function ItemCard({ item }) {
       />
       <div className="p-4">
         <Link 
-          to={`/item/${item._id}`}
+          href={`/item/${item._id}`}
           className="text-xl font-semibold text-blue-600 hover:text-blue-800"
         >
+          
           {item.name}
+          
         </Link>
         <p className="text-sm text-gray-500 mt-1">{item.category}</p>
         <p className="text-gray-600 mt-2">{item.description}</p>

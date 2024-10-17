@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { v4 as uuidv4 } from 'uuid';
-import api from '../../services/api';
+import api from '../lib/api';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -13,7 +13,7 @@ export default function Register() {
   const [deviceId, setDeviceId] = useState('');
   const [showFullText, setShowFullText] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     let storedDeviceId = localStorage.getItem('deviceId');
@@ -63,14 +63,14 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/api/auth/register', { email, password, deviceId });
+      const response = await api.post('api/auth/register', { email, password, deviceId });
       setError('Registered successfully');
       setEmail('');
       setPassword('');
       
       // Show success message briefly before redirecting
       setTimeout(() => {
-        navigate('/login', { state: { message: 'Registration successful. Please log in.' } });
+        router.push('/login', { state: { message: 'Registration successful. Please log in.' } });
       }, 2000);
     } catch (error) {
       setError(error.response?.data?.message || 'Registration failed. Please try again.');
@@ -185,8 +185,10 @@ export default function Register() {
               </form>
               <p className="text-center text-sm text-gray-600">
                 Already have an account?{' '}
-                <Link to="/login" className="text-orange-500 hover:text-orange-600 font-medium">
+                <Link href="/login" className="text-orange-500 hover:text-orange-600 font-medium">
+                  
                   Login here
+                  
                 </Link>
               </p>
             </>

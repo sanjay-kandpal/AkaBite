@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import api from '../services/api';
+import api from '../lib/api';
 import { v4 as uuidv4 } from 'uuid';
 
 const AuthContext = createContext(null);
@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [deviceId, setDeviceId] = useState(null);
   const [activeSessions, setActiveSessions] = useState([]);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     initializeDeviceId();
@@ -27,9 +28,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkAuthStatus = async () => {
+    if (authChecked) return;
     console.log('Checking auth status');
     const token = localStorage.getItem('token');
-    console.log('Token from localStorage:', token);
+    console.log('Token:', token);
     if (token) {
       try {
         const response = await api.get('/api/auth/verify');
@@ -45,6 +47,7 @@ export const AuthProvider = ({ children }) => {
       console.log('No token found, logging out internally');
       await logoutInternal();
     }
+    setAuthChecked(true);
     setIsLoading(false);
   };
 

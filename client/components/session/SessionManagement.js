@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
 function SessionManagement() {
   const { activeSessions, logoutDevice, deviceId, fetchActiveSessions } = useAuth();

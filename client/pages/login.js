@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useRouter } from 'next/router';
+import { useAuth } from '../contexts/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
+import Link from 'next/link';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -12,8 +13,7 @@ export default function Login() {
   const [deviceId, setDeviceId] = useState('');
   const [showFullText, setShowFullText] = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate();
-
+  const router = useRouter();
   useEffect(() => {
     let storedDeviceId = localStorage.getItem('deviceId');
     if (!storedDeviceId) {
@@ -61,7 +61,7 @@ export default function Login() {
 
     try {
       await login(email, password, deviceId);
-      navigate('/', { replace: true });
+      router.push('/', { replace: true });
     } catch (error) {
       console.error('Login failed:', error);
       setError('Login failed. Please check your credentials and try again.');
@@ -155,8 +155,10 @@ export default function Login() {
           </form>
           <p className="text-center text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link to="/register" className="text-orange-500 hover:text-orange-600 font-medium">
+            <Link href="/register" className="text-orange-500 hover:text-orange-600 font-medium">
+              
               Register here
+              
             </Link>
           </p>
         </div>

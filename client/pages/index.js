@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import api from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-import Loader from '../Loader/Loader';
+import api from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import Loader from '../components/Loader/Loader';
 
-import Banner from '../Banner/Banner';
-import CategoryButtons from '../CategoryButtons/CategoryButtons';
-import ItemCard from '../ItemCard/ItemCard';
-
-function Home() {
+import Banner from '../components/Banner/Banner';
+import CategoryButtons from '../components/CategoryButtons/CategoryButtons';
+import ItemCard from '../components/ItemCard/ItemCard';
+import {useRouter} from 'next/router';
+export default function Home() {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,7 @@ function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
   const searchInputRef = useRef(null);
-
+  const router = useRouter();
   const categories = ['All', 'Fruit', 'Vegetable', 'Non-veg', 'Breads', 'Other'];
 
   const banners = [
@@ -44,10 +44,14 @@ function Home() {
 
   useEffect(() => {
     if (!authLoading) {
-      fetchItems();
+      if (isAuthenticated) {
+        fetchItems();
+      } else {
+        router.push('/login');
+      }
     }
-  }, [authLoading, isAuthenticated, fetchItems]);
-
+  }, [authLoading, isAuthenticated, fetchItems,router]);
+  
   useEffect(() => {
     const filterItems = () => {
       let result = items;
@@ -91,9 +95,11 @@ function Home() {
     }
   }, [isSearchActive]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return <Loader message="Loading Home Screen Please wait..." />;
   }
+
+  
 
   if (error) {
     return (
@@ -165,5 +171,3 @@ function Home() {
     </div>
   );
 }
-
-export default Home;
